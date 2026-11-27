@@ -22,7 +22,7 @@ const STYLES = `
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
-  margin: 12px 24px 4px 24px;
+  margin: 12px 0 16px;
   border-radius: 10px;
   background: var(--yt-spec-badge-chip-background, rgba(128, 128, 128, 0.14));
   border: 1px solid var(--yt-spec-10-percent-layer, rgba(128, 128, 128, 0.25));
