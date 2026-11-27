@@ -19,6 +19,8 @@ const USER_SCRIPT_BANNER = `// ==UserScript==
 // @grant        GM.deleteValue
 // @grant        GM.getValues
 // @grant        GM.setValues
+// @grant        GM.addValueChangeListener
+// @grant        GM.removeValueChangeListener
 // @grant        unsafeWindow
 // @run-at       document-idle
 // ==/UserScript==

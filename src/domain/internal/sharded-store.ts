@@ -200,4 +200,9 @@ export async function flushDirtyShards(
   for (const key of toDelete) {
     await storage.delete(key);
   }
+
+  // Notify only after every shard is persisted. Readers use the same lock.
+  if (Object.keys(toSet).length > 0 || toDelete.length > 0) {
+    await storage.publishChange?.();
+  }
 }

@@ -1040,9 +1040,8 @@ export function mountHistorySearchModal(
     openRefreshFn = () => {
       populateAccountDropdown();
       renderResults();
-      if (toolsVisible) {
-        renderToolTab();
-      }
+      // A remote watch must not reset a selected import file or unsaved label.
+      // Tool panels rebuild when the user opens or switches their tab.
     };
 
     document.body.append(backdrop);
