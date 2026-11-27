@@ -51,13 +51,3 @@ Cross-tab coordination uses the browser's Web Locks API and FireMonkey's storage
 3. Test broad search (`bots "group iron man" programming`), the **Strict** and **Regex** checkboxes, `"quoted phrase"`, `OR` / `|`, `-negation`, `channel:`, `account:`, `type:short`, `after:`/`before:`, **Best match**, and **Most watched** (expanding watch dates).
 4. Watch a video for >= 25 seconds (and a < 25s Short for >= 80%), return to `/feed/history`, and verify the live watch appears with duration and description snippet.
 5. Export a backup JSON under **Tools** -> **Backup / Restore**, then test merging it back in.
-
-### Cross-tab smoke test (Firefox + FireMonkey)
-
-1. Update the existing script and reload all YouTube tabs. Keep Search Local History open in tab A with filters cleared.
-2. In tab B, start a video, then switch back to tab A while it keeps playing. After at least 30 seconds of playback, the new watch should appear without closing the modal; current search/filter/sort selections should remain intact. Paused playback does not count.
-3. In two Firefox tabs in the same container, play different videos long enough to record near the same time. Reload the history page and confirm both watches remain.
-4. Repeat while importing a Takeout or backup file in another tab; confirm imported and live watches both survive.
-5. Leave a file selected in Import Takeout (or edit an account label without saving), then record another watch elsewhere. The pending tool input should remain intact.
-
-Automated tests simulate independent tabs, GM storage/listeners, and the Web Locks scheduler. The smoke test above is still required to verify the installed FireMonkey/Firefox integration.
