@@ -7,7 +7,7 @@ A local, multi-account YouTube watch-history indexer and search overlay for Fire
 
 ## Features
 
-- **Live watch tracking**: Logs videos after 25 seconds of active visible playback (or 80% of duration with a 3-second floor for clips under 25 seconds), coalescing repeats of the same `(accountId, videoId)` within 30 minutes.
+- **Live watch tracking**: Logs videos after 25 seconds of active playback, including background tabs (or 80% of duration with a 3-second floor for clips under 25 seconds), coalescing repeats of the same `(accountId, videoId)` within 30 minutes.
 - **Cross-tab history**: Serializes saves across ordinary YouTube tabs and refreshes open search results after another tab saves.
 - **Multi-account support**: Distinguishes Google logins, Brand Accounts, and signed-out (`blank`) sessions with editable friendly labels.
 - **Google Takeout backfill**: Imports `watch-history.json`, tags Shorts/Live/YouTube Music, drops Google Ads entries and linkless removals, and assigns the chosen account owner.
@@ -55,8 +55,8 @@ Cross-tab coordination uses the browser's Web Locks API and FireMonkey's storage
 ### Cross-tab smoke test (Firefox + FireMonkey)
 
 1. Update the existing script and reload all YouTube tabs. Keep Search Local History open in tab A with filters cleared.
-2. In tab B, play a video visibly for at least 30 seconds. Return to A: the new watch should appear without closing the modal, and its current search/filter/sort selections should remain intact.
-3. In two separate visible Firefox windows in the same container, play different videos long enough to record near the same time. Reload the history page and confirm both watches remain.
+2. In tab B, start a video, then switch back to tab A while it keeps playing. After at least 30 seconds of playback, the new watch should appear without closing the modal; current search/filter/sort selections should remain intact. Paused playback does not count.
+3. In two Firefox tabs in the same container, play different videos long enough to record near the same time. Reload the history page and confirm both watches remain.
 4. Repeat while importing a Takeout or backup file in another tab; confirm imported and live watches both survive.
 5. Leave a file selected in Import Takeout (or edit an account label without saving), then record another watch elsewhere. The pending tool input should remain intact.
 

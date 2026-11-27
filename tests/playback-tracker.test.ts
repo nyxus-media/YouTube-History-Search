@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createPlaybackTracker } from "../src/domain/playback-tracker.js";
 
 describe("PlaybackTracker", () => {
-  test("standard >= 25s video emits once at 25,000ms of active playback with startedPlayingAtMs", () => {
+  test.each([true, false])("standard video emits once at 25,000ms of playback (visible=%s)", (visible) => {
     const tracker = createPlaybackTracker();
 
     tracker.onNavigate(
@@ -20,7 +20,7 @@ describe("PlaybackTracker", () => {
     );
 
     tracker.onPlaybackStateChange(
-      { playing: true, visible: true, durationSeconds: 180 },
+      { playing: true, visible, durationSeconds: 180 },
       2_000
     );
 
@@ -45,46 +45,34 @@ describe("PlaybackTracker", () => {
     expect(tracker.tick(40_000)).toBeNull();
   });
 
-  test("visibility and pause gating accumulates only visible active playback segments", () => {
+  test("focus changes preserve accumulated playback while pauses do not count", () => {
     const tracker = createPlaybackTracker();
-
-    tracker.onNavigate(
-      {
-        videoId: "vid-pause",
-        title: "Pausable Video",
-        durationSeconds: 300,
-        accountId: "acc-1"
-      },
-      0
-    );
-
-    // Playing while backgrounded should not count or set watchedAt
-    tracker.onPlaybackStateChange({ playing: true, visible: false, durationSeconds: 300 }, 1_000);
-    expect(tracker.tick(30_000)).toBeNull();
-
-    // Segment 1: becomes visible & playing at 35_000 -> runs 10_000ms until paused at 45_000
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 300 }, 35_000);
-    expect(tracker.tick(44_999)).toBeNull();
-    tracker.onPlaybackStateChange({ playing: false, visible: true, durationSeconds: 300 }, 45_000);
-    // Elapsed while paused (45_000 -> 100_000) does not count
+    tracker.onNavigate({ videoId: "background", title: "Background", durationSeconds: 300, accountId: "acc-1" }, 0);
+    tracker.onPlaybackStateChange({ playing: true, visible: true }, 1_000);
+    // Ten seconds in the foreground, followed by five in the background.
+    tracker.onPlaybackStateChange({ playing: true, visible: false }, 11_000);
+    tracker.onPlaybackStateChange({ playing: false, visible: false }, 16_000);
     expect(tracker.tick(100_000)).toBeNull();
-
-    // Segment 2: resumes at 100_000 -> runs 10_000ms until hidden at 110_000 (total 20_000ms)
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 300 }, 100_000);
-    expect(tracker.tick(109_999)).toBeNull();
-    tracker.onPlaybackStateChange({ playing: true, visible: false, durationSeconds: 300 }, 110_000);
-    expect(tracker.tick(150_000)).toBeNull();
-
-    // Segment 3: visible again at 150_000 -> needs 5_000ms more (emits at 155_000)
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 300 }, 150_000);
-    expect(tracker.tick(154_999)).toBeNull();
-
-    const observation = tracker.tick(155_000);
-    expect(observation?.watchedAt).toBe(35_000);
-    expect(observation?.videoId).toBe("vid-pause");
+    // Merely focusing a paused tab must not start its timer.
+    tracker.onPlaybackStateChange({ playing: false, visible: true }, 100_000);
+    expect(tracker.tick(200_000)).toBeNull();
+    // Resume in the background; ten more seconds reaches the original threshold.
+    tracker.onPlaybackStateChange({ playing: true, visible: false }, 200_000);
+    expect(tracker.tick(209_999)).toBeNull();
+    expect(tracker.tick(210_000)).toMatchObject({ videoId: "background", watchedAt: 1_000 });
+    tracker.onPlaybackStateChange({ playing: true, visible: true }, 220_000);
+    expect(tracker.tick(230_000)).toBeNull();
   });
 
-  test("short videos under 25s use 80% of duration with a 3,000ms floor, while 25s uses 25,000ms", () => {
+  test("a delayed background tick records once and preserves the start timestamp", () => {
+    const tracker = createPlaybackTracker();
+    tracker.onNavigate({ videoId: "delayed", title: "Delayed", accountId: "acc-1" }, 0);
+    tracker.onPlaybackStateChange({ playing: true, visible: false }, 1_000);
+    expect(tracker.tick(61_000)).toMatchObject({ videoId: "delayed", watchedAt: 1_000 });
+    expect(tracker.tick(120_000)).toBeNull();
+  });
+
+  test.each([true, false])("short-video thresholds remain unchanged (visible=%s)", (visible) => {
     const tracker = createPlaybackTracker();
 
     // 15s Short -> 12,000ms threshold
@@ -98,7 +86,7 @@ describe("PlaybackTracker", () => {
       },
       0
     );
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 15 }, 1_000);
+    tracker.onPlaybackStateChange({ playing: true, visible, durationSeconds: 15 }, 1_000);
     expect(tracker.tick(12_999)).toBeNull();
     expect(tracker.tick(13_000)?.videoId).toBe("short-15");
 
@@ -113,7 +101,7 @@ describe("PlaybackTracker", () => {
       },
       20_000
     );
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 2 }, 20_000);
+    tracker.onPlaybackStateChange({ playing: true, visible, durationSeconds: 2 }, 20_000);
     expect(tracker.tick(22_999)).toBeNull();
     expect(tracker.tick(23_000)?.videoId).toBe("clip-2");
 
@@ -128,7 +116,7 @@ describe("PlaybackTracker", () => {
       },
       30_000
     );
-    tracker.onPlaybackStateChange({ playing: true, visible: true, durationSeconds: 25 }, 30_000);
+    tracker.onPlaybackStateChange({ playing: true, visible, durationSeconds: 25 }, 30_000);
     expect(tracker.tick(54_999)).toBeNull();
     expect(tracker.tick(55_000)?.videoId).toBe("vid-25");
   });

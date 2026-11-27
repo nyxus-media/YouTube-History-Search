@@ -245,6 +245,8 @@ export function startYouTubeObserver(
 ): YouTubeObserverHandle {
   let boundVideo: HTMLVideoElement | null = null;
   let stopped = false;
+  // Media events also drive tracking when background interval callbacks are delayed.
+  const playbackEvents = ["play", "playing", "pause", "ended", "waiting", "loadedmetadata", "timeupdate"];
 
   const readPlaybackState = (videoEl: HTMLVideoElement | null) => ({
     playing: Boolean(videoEl && !videoEl.paused && !videoEl.ended && videoEl.readyState > 1),
@@ -301,7 +303,7 @@ export function startYouTubeObserver(
     if (!boundVideo) {
       return;
     }
-    for (const evt of ["play", "playing", "pause", "ended", "waiting", "loadedmetadata"]) {
+    for (const evt of playbackEvents) {
       boundVideo.removeEventListener(evt, handleVideoEvent);
     }
     boundVideo = null;
@@ -314,7 +316,7 @@ export function startYouTubeObserver(
     unbindVideo();
     boundVideo = nextVideo;
     if (boundVideo) {
-      for (const evt of ["play", "playing", "pause", "ended", "waiting", "loadedmetadata"]) {
+      for (const evt of playbackEvents) {
         boundVideo.addEventListener(evt, handleVideoEvent);
       }
     }
