@@ -1,4 +1,7 @@
-# YouTube Watch History Search (FireMonkey Userscript)
+# YouTube History Search
+
+> [!WARNING]
+> This project is entirely vibe coded with no QC done. Use at your own risk.
 
 A local, multi-account YouTube watch-history indexer and search overlay for Firefox + FireMonkey.
 
