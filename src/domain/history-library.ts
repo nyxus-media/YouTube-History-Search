@@ -235,7 +235,8 @@ export function createHistoryLibrary(storage: StorageAdapter): HistoryLibrary {
   let writeQueue: Promise<unknown> = Promise.resolve();
 
   const withWriteLock = <T>(fn: () => Promise<T>): Promise<T> => {
-    const next = writeQueue.then(fn, fn);
+    const run = () => storage.withExclusiveLock ? storage.withExclusiveLock(fn) : fn();
+    const next = writeQueue.then(run, run);
     writeQueue = next.then(
       () => undefined,
       () => undefined

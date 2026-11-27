@@ -7,7 +7,8 @@ A local, multi-account YouTube watch-history indexer and search overlay for Fire
 
 ## Features
 
-- **Live watch tracking**: Logs videos after 25 seconds of active visible playback (or 80% of duration with a 3-second floor for clips under 25 seconds), coalescing repeats of the same `(accountId, videoId)` within 30 minutes.
+- **Live watch tracking**: Logs videos after 25 seconds of active playback, including background tabs (or 80% of duration with a 3-second floor for clips under 25 seconds), coalescing repeats of the same `(accountId, videoId)` within 30 minutes.
+- **Cross-tab history**: Serializes saves across ordinary YouTube tabs and refreshes open search results after another tab saves.
 - **Multi-account support**: Distinguishes Google logins, Brand Accounts, and signed-out (`blank`) sessions with editable friendly labels.
 - **Google Takeout backfill**: Imports `watch-history.json`, tags Shorts/Live/YouTube Music, drops Google Ads entries and linkless removals, and assigns the chosen account owner.
 - **Fast search on `/feed/history`**: Broad search by default (match-any with Best-match ranking, light stemming, word-start matching, space/hyphen-insensitive phrases, multiword initialisms, and `OR` / `|` with parentheses), plus a **Strict** toggle for exact literal `AND`, `"exact phrases"`, `-negation`, inline `/regex/i` or regex mode, `channel:`, `account:`, `type:`, inclusive local-timezone `after:YYYY-MM-DD` / `before:YYYY-MM-DD`, and `Best match` / `Most recent` / `Oldest` / collapsed `Most watched` sort modes.
@@ -29,7 +30,11 @@ npm run build
 1. Run `npm run build` to generate `dist/youtube-history-search.user.js`.
 2. **First-time install:** Open FireMonkey's Options/Dashboard in Firefox, click **New UserScript** (or import the `.user.js` file), paste the contents of `dist/youtube-history-search.user.js`, and save.
 3. **Updating without losing saved history:** Export a **Backup JSON** inside the modal first as a safeguard. Then **refresh the FireMonkey Options/Dashboard tab**, open the **existing** script in FireMonkey's editor, paste the updated contents of `dist/youtube-history-search.user.js`, and click **Save**. Do **not** use FireMonkey's "Import" file action to replace an existing script (which can replace or orphan its per-script storage) and do not save from a stale FireMonkey editor tab opened before your Takeout import.
-4. Verify in FireMonkey's script list that the script is enabled and shows `@match https://www.youtube.com/*` and grants `GM.getValue`, `GM.setValue`, `GM.deleteValue`, `GM.getValues`, `GM.setValues`, and `unsafeWindow`.
+4. Verify in FireMonkey's script list that the script is enabled and shows `@match https://www.youtube.com/*` and grants `GM.getValue`, `GM.setValue`, `GM.deleteValue`, `GM.getValues`, `GM.setValues`, `GM.addValueChangeListener`, `GM.removeValueChangeListener`, and `unsafeWindow`.
+
+After updating, reload **every open YouTube tab** so no older script instance can continue writing without the cross-tab lock.
+
+Cross-tab coordination uses the browser's Web Locks API and FireMonkey's storage change listeners. Firefox 115+ (the build target) supports Web Locks. The lock covers ordinary tabs on `https://www.youtube.com` within the same browser storage partition; it does **not** coordinate across Firefox containers or private/regular browsing boundaries. Avoid simultaneous writes across those boundaries. History remains in FireMonkey storage; no history is placed in page storage. If Web Locks are unavailable, initialization fails instead of silently allowing unsafe writes.
 
 ## Exporting Google Takeout History (`watch-history.json`)
 

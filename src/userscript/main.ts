@@ -1,3 +1,4 @@
+import { startHistorySync } from "./history-sync.js";
 import { createHistoryLibrary } from "../domain/history-library.js";
 import { createPlaybackTracker } from "../domain/playback-tracker.js";
 import { createFireMonkeyStorageAdapter } from "./firemonkey-storage.js";
@@ -11,12 +12,14 @@ async function bootstrap(): Promise<void> {
 
   const tracker = createPlaybackTracker();
   let modalHandle: ReturnType<typeof mountHistorySearchModal> | null = null;
-
   const observerHandle = startYouTubeObserver(library, tracker, () => {
     modalHandle?.refreshIfOpen();
   });
 
   modalHandle = mountHistorySearchModal(library, () => observerHandle.getCurrentAccount());
+  await startHistorySync(storage, library, () => modalHandle?.refreshIfOpen());
+  await library.load();
+  modalHandle.refreshIfOpen();
 }
 
 void bootstrap().catch((err: unknown) => {

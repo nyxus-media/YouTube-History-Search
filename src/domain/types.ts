@@ -123,6 +123,10 @@ export interface BackupSnapshot {
 }
 
 export interface StorageAdapter {
+  /** Coordinate the entire read/modify/write operation, not individual writes. */
+  withExclusiveLock?<T>(task: () => Promise<T>): Promise<T>;
+  publishChange?(): Promise<void>;
+  subscribe?(listener: () => void): Promise<() => void>;
   get<T>(key: string): Promise<T | undefined>;
   set<T>(key: string, value: T): Promise<void>;
   delete(key: string): Promise<void>;

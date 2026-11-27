@@ -81,7 +81,8 @@ export function createPlaybackTracker(): PlaybackTracker {
   let firstActiveAtMs: number | null = null;
   let emitted = false;
 
-  const isActive = (s: PlaybackState): boolean => s.playing && s.visible;
+  // Playback counts in background tabs too; visibility is not a watch criterion.
+  const isActive = (s: PlaybackState): boolean => s.playing;
 
   const settleActiveTime = (nowMs: number): void => {
     if (activeSegmentStartMs !== null) {
